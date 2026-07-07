@@ -52,10 +52,10 @@ func get_params(uri string) map[string]string {
 }
 
 type CollatzResponse struct {
-	starting_number int
-	length          int
-	peak            int
-	chain           []int
+	StartingNumber int   `json:"starting_number"`
+	Length         int   `json:"length"`
+	Peak           int   `json:"peak"`
+	Chain          []int `json:"chain"`
 }
 
 func collatz_handler(w http.ResponseWriter, r *http.Request) {
@@ -74,7 +74,13 @@ func collatz_handler(w http.ResponseWriter, r *http.Request) {
 
 	chain := create_chain(n)
 
-	response := CollatzResponse{chain[0], len(chain), slices.Max(chain), chain}
+	// response := CollatzResponse{chain[0], len(chain), slices.Max(chain), chain}
+	response := CollatzResponse{
+		StartingNumber: chain[0],
+		Length:         len(chain),
+		Peak:           slices.Max(chain),
+		Chain:          chain,
+	}
 
 	response_str, json_parse_err := json.Marshal(response)
 	if json_parse_err == nil {
