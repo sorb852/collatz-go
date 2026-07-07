@@ -1,19 +1,21 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"os"
+	"log"
+	"net/http"
 	"slices"
 	"strconv"
-	"path/filepath"
+	"strings"
 )
 
 // Applies the rule on the number and returns it.
 func apply_rule(x int) int {
-	if x % 2 == 0 {
+	if x%2 == 0 {
 		return x / 2
 	} else {
-		return 3 * x + 1
+		return 3*x + 1
 	}
 }
 
@@ -23,48 +25,65 @@ func create_chain(n int) []int {
 	// its lowkey clean tho right
 	for i := n; true; i = apply_rule(i) {
 		out = append(out, i)
-		if i == 1 { break }
+		if i == 1 {
+			break
+		}
 	}
 	return out
 }
 
-func main() {
-	args := os.Args[1:]
-	if len(args) < 1 {
-		fmt.Fprintln(os.Stderr, "No argument given")
-		os.Exit(1)
+// Parases the URI string to get the params
+func get_params(uri string) map[string]string {
+	split := strings.Split(uri, "?")
+	if len(split) < 2 {
+		return nil
 	}
-	// ik this a little sloppy but hey, its a simple CLI so no body cares
-	if args[0] == "-h" || args[0] == "--help" {
-		fmt.Fprintf(os.Stderr, "Usage: %v [-h | --help | N]\n", filepath.Base(os.Args[0]))
-		os.Exit(0)
+	paramstr := split[1]
+	params_pair := strings.Split(paramstr, "&")
+	params := map[string]string{}
+	for _, pair := range params_pair {
+		pair := strings.Split(pair, "=")
+		if len(pair) < 2 {
+			continue
+		}
+		params[pair[0]] = pair[1]
+	}
+	return params
+}
+
+type CollatzResponse struct {
+	starting_number int
+	length          int
+	peak            int
+	chain           []int
+}
+
+func collatz_handler(w http.ResponseWriter, r *http.Request) {
+	params := get_params(r.RequestURI)
+	n_str, exists := params["n"]
+	if !exists {
+		fmt.Fprint(w, "parameter n doesn't exist")
+		return
 	}
 
-	var n_str string = args[0]
-
-	n, err := strconv.Atoi(n_str)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Please input a valid string")
-		os.Exit(1)
-	}
-
-	if n < 1 {
-		fmt.Fprintln(os.Stderr, "N must be a natural number")
-		os.Exit(1)
+	n, parse_err := strconv.Atoi(n_str)
+	if parse_err != nil || n < 1 {
+		fmt.Fprint(w, "parameter n is not a natural number")
+		return
 	}
 
 	chain := create_chain(n)
 
-	// print the chain
-	// it its python esque so you can use it somewhere else
-	fmt.Println("Created chain:")
-	fmt.Printf("[%v", chain[0])
-	for i := 1; i < len(chain); i++ {
-		fmt.Printf(", %v", chain[i])
-	}
-	fmt.Println("]")
+	response := CollatzResponse{chain[0], len(chain), slices.Max(chain), chain}
 
-	// some stats
-	fmt.Printf("Element count: %v\n", len(chain))
-	fmt.Printf("Peak of graph: %v\n", slices.Max(chain))
+	response_str, json_parse_err := json.Marshal(response)
+	if json_parse_err == nil {
+		fmt.Fprint(w, string(response_str))
+	}
+}
+
+func main() {
+	http.HandleFunc("/collatz", collatz_handler)
+
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
