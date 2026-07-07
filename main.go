@@ -2,12 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"slices"
 	"strconv"
-	"strings"
 )
 
 // Applies the rule on the number and returns it.
@@ -32,25 +30,11 @@ func create_chain(n int) []int {
 	return out
 }
 
-// Parases the URI string to get the params
-func get_params(uri string) map[string]string {
-	split := strings.Split(uri, "?")
-	if len(split) < 2 {
-		return nil
-	}
-	paramstr := split[1]
-	params_pair := strings.Split(paramstr, "&")
-	params := map[string]string{}
-	for _, pair := range params_pair {
-		pair := strings.Split(pair, "=")
-		if len(pair) < 2 {
-			continue
-		}
-		params[pair[0]] = pair[1]
-	}
-	return params
+// Error response to collatz conjecture request
+type CollatzErrorResponse struct {
+	Message string `json:"message"`
 }
-
+// Response to collatz conjecture request
 type CollatzResponse struct {
 	StartingNumber int   `json:"starting_number"`
 	Length         int   `json:"length"`
@@ -58,23 +42,30 @@ type CollatzResponse struct {
 	Chain          []int `json:"chain"`
 }
 
+// my favourite little conjecture
+// i would never solve it obv but i think its so cool
 func collatz_handler(w http.ResponseWriter, r *http.Request) {
-	params := get_params(r.RequestURI)
-	n_str, exists := params["n"]
-	if !exists {
-		fmt.Fprint(w, "parameter n doesn't exist")
+	params := r.URL.Query()
+	n_str := params.Get("n")
+    w.Header().Set("Content-Type", "application/json")
+    // js assume its gonna work alr
+    // we can use http.Error to override it anyways
+    w.WriteHeader(http.StatusOK)
+
+	if n_str == "" {
+		res, _ := json.Marshal(CollatzErrorResponse{Message: "parameter n is missing"})
+		http.Error(w, string(res), http.StatusBadRequest)
 		return
 	}
 
 	n, parse_err := strconv.Atoi(n_str)
 	if parse_err != nil || n < 1 {
-		fmt.Fprint(w, "parameter n is not a natural number")
+		res, _ := json.Marshal(CollatzErrorResponse{Message: "parameter n is not a natural number"})
+		http.Error(w, string(res), http.StatusBadRequest)
 		return
 	}
 
 	chain := create_chain(n)
-
-	// response := CollatzResponse{chain[0], len(chain), slices.Max(chain), chain}
 	response := CollatzResponse{
 		StartingNumber: chain[0],
 		Length:         len(chain),
@@ -82,14 +73,16 @@ func collatz_handler(w http.ResponseWriter, r *http.Request) {
 		Chain:          chain,
 	}
 
-	response_str, json_parse_err := json.Marshal(response)
-	if json_parse_err == nil {
-		fmt.Fprint(w, string(response_str))
+	json_parse_err := json.NewEncoder(w).Encode(response)
+	if json_parse_err != nil {
+        http.Error(w, json_parse_err.Error(), http.StatusInternalServerError)
+        return
 	}
 }
 
 func main() {
 	http.HandleFunc("/collatz", collatz_handler)
 
+    // Start that baby UP
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
