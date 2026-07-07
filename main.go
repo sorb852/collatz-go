@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 )
 
+// Applies the rule on the number and returns it.
 func apply_rule(x int) int {
 	if x % 2 == 0 {
 		return x / 2
@@ -16,8 +17,10 @@ func apply_rule(x int) int {
 	}
 }
 
+// Creates the chain of numbers and taking `n` as its starting point
 func create_chain(n int) []int {
 	var out = []int{}
+	// its lowkey clean tho right
 	for i := n; true; i = apply_rule(i) {
 		out = append(out, i)
 		if i == 1 { break }
@@ -31,6 +34,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "No argument given")
 		os.Exit(1)
 	}
+	// ik this a little sloppy but hey, its a simple CLI so no body cares
 	if args[0] == "-h" || args[0] == "--help" {
 		fmt.Fprintf(os.Stderr, "Usage: %v [-h | --help | N]\n", filepath.Base(os.Args[0]))
 		os.Exit(0)
@@ -50,6 +54,9 @@ func main() {
 	}
 
 	chain := create_chain(n)
+
+	// print the chain
+	// it its python esque so you can use it somewhere else
 	fmt.Println("Created chain:")
 	fmt.Printf("[%v", chain[0])
 	for i := 1; i < len(chain); i++ {
@@ -57,6 +64,7 @@ func main() {
 	}
 	fmt.Println("]")
 
+	// some stats
 	fmt.Printf("Element count: %v\n", len(chain))
 	fmt.Printf("Peak of graph: %v\n", slices.Max(chain))
 }
