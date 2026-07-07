@@ -1,3 +1,3 @@
-module sorb852/collatz-go
+module collatz-go
 
 go 1.26.4
