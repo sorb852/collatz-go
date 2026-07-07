@@ -48,9 +48,6 @@ func collatz_handler(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	n_str := params.Get("n")
     w.Header().Set("Content-Type", "application/json")
-    // js assume its gonna work alr
-    // we can use http.Error to override it anyways
-    w.WriteHeader(http.StatusOK)
 
 	if n_str == "" {
 		res, _ := json.Marshal(CollatzErrorResponse{Message: "parameter n is missing"})
@@ -78,6 +75,8 @@ func collatz_handler(w http.ResponseWriter, r *http.Request) {
         http.Error(w, json_parse_err.Error(), http.StatusInternalServerError)
         return
 	}
+
+    w.WriteHeader(http.StatusOK)
 }
 
 func main() {
