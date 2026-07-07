@@ -69,8 +69,10 @@ Maybe in the future I will add more stats. Though it doesnt happen that often so
 
 ## So, why?
 
-I merely needed an excuse to learn go, before this I didn't like the syntax and gave up. Though I gave it a second chance because it always looked cool to me.
+Really I needed an excuse to learn go. Before this I didn't like the syntax and gave up. Though I gave it a second chance because it always looked cool to me.
 
 Choosing the *Collatz Conjecture* is just the thing I do when I learn any new language. And this time I put it up with Go's exceptional networking library (yes it is that good).
+
+In conclusion, Go is a really cool language. I will be using it more now.
 
 <!-- vim: wrap -->
