@@ -1,12 +1,12 @@
 package routes
 
 import (
+	"collatz-go/processor"
+	"encoding/json"
 	"log"
 	"net/http"
-	"encoding/json"
 	"slices"
 	"strconv"
-	"collatz-go/processor"
 )
 
 // Error response to collatz conjecture request
@@ -16,10 +16,11 @@ type CollatzErrorResponse struct {
 
 // Response to collatz conjecture request
 type CollatzResponse struct {
-	StartingNumber int   `json:"starting_number"`
-	Length         int   `json:"length"`
-	Peak           int   `json:"peak"`
-	Chain          []int `json:"chain"`
+	StartingNumber int     `json:"starting_number"`
+	Length         int     `json:"length"`
+	Average        float32 `json:"average"`
+	Peak           int     `json:"peak"`
+	Chain          []int   `json:"chain"`
 }
 
 // my favourite little conjecture
@@ -48,9 +49,14 @@ func CollatzHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Processing number %v for %s\n", n, r.RemoteAddr)
 	chain := processor.CreateChain(n)
+	var sum int = 0
+	for _, v := range chain {
+		sum += v
+	}
 	response := CollatzResponse{
 		StartingNumber: chain[0],
 		Length:         len(chain),
+		Average:        float32(sum) / float32(len(chain)),
 		Peak:           slices.Max(chain),
 		Chain:          chain,
 	}
